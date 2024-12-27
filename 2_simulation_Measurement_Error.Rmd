@@ -1,0 +1,137 @@
+---
+title: "2_Simulating_Measurement_Error"
+output: html_document
+date: "2024-12-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rethinking)
+library(ggpubr)
+```
+
+## Data set of Simulation
+
+Based on the manual of the ACT-measuring device used in the study, we simulated a measurement error with coeficient of variation of 10%.
+Based on the MCMC of the rethinking package of RMcElreath. link. we simulated the distribution of P(ACT|kACT). (= the distribution of the real ACT for a measured value kACT). From this distribution we took 1000 random samples.
+
+```{r}
+sampling_kact <- function(kact,nsamples){
+  d <- list(kact= kact
+            )
+  model1 <- ulam(
+    alist(
+      kact ~ dnorm(act_bar,act_bar/10),
+      
+      #prior
+      act_bar ~ dunif(0,1000)
+    ), data= d, chains =4, cores=4, iter=10000
+  )
+  samples_pre <- rethinking::extract.samples(model1, n=nsamples)
+  head(samples_pre[[1]],nsamples)
+  
+} 
+
+
+test <- tibble(
+  kact=116,
+act= sampling_kact(116,1000)
+)
+
+
+ggplot(test, aes(x=act))+
+  geom_histogram(col='white',fill='steelblue', 
+                 binwidth=5)+
+  theme_classic()+
+  labs(title='P(ACT|kACT=116)',
+       subtitle = 'distribution of 1000 samples',
+       x='ACT (seconds)')
+
+
+```
+
+```{r}
+set.seed(123)
+
+dat1000<- tibble(
+  act_0 = sampling_kact(116,1000), # 1000 samples from P(ACT|kACT=116)
+  act_33000 = sampling_kact(535,1000), # 1000 samples from P(ACT|kACT=535)
+  slope_hep= (act_33000-act_0)/33000, # resulting heparin sensitivity for each simulated pair of samples.
+  act_x = sampling_kact(124,1000), # 1000 samples from P(ACT|kACT=124)
+  hep_act_x = (act_x-act_0)/slope_hep # 1000 samples from P(Heparin| kACT=124)
+  
+)
+```
+
+```{r}
+ggplot(dat1000, aes(x=act_0))+
+  geom_histogram(col='white',fill='steelblue', 
+                 binwidth=5)+
+  theme_classic()+
+  labs(title='P(ACT|kACT=116)',
+       subtitle = 'distribution of 1000 samples',
+       x='ACT (seconds)')
+
+```
+## Fig C: P(kACT|Heparin)
+
+### heparine sensitivity
+
+Repeating the procedure to calculate the slope/Heparin Sensitivity for each pair of samples from P(ACT|kACT=116) and P(ACT|kACT=535) gives fig C.  
+
+```{r}
+fig_C <- ggplot(dat1000)+
+    ## x-axis
+  geom_hline(yintercept=0)+
+    
+  ## 1000 sampled sensitivity lines
+  geom_segment(#data=.%>% head(150),
+    aes(x= 0, xend=33000, y= act_0, yend=act_33000), col='grey70', 
+    linewidth=0.5, alpha=0.1)+
+  
+  ## Box plot of P(ACT|kACT = 113)
+  geom_boxplot(aes(y= act_0, x= -700),
+               width=700, outliers = F,col='steelblue')+
+  
+  
+  ## Boxplot of P(ACT|kACT= 535)
+  geom_boxplot(aes(y= act_33000, x= 33000+700),width=700, outliers = T,
+               col='steelblue')+
+  
+  
+  
+  
+  ## y-axis
+  geom_vline(xintercept=0)+
+  
+  theme_minimal()+
+  labs(x='Heparin (IU)',
+       y='Activated Clotting Time (s)')+
+  
+  ## measured sensitivity line
+  annotate( geom='segment', x= 0, xend=33000, y= median(dat1000$act_0), yend=median(dat1000$act_33000), col='grey30', linewidth=2)+
+  
+  labs(title= 'P(ACT|heparin)',
+       subtitle = 'Spread of Heparine Sensitivity based on 1000 samples')
+
+fig_C
+
+```
+
+### P(ACT|heparin = 20000): Predicting in the vertical plane
+This simulation can also be used to predict what the real ACT would be if e.g. 20000 Heparin was given. This can be vizualized as the distribution of het intersection between horizontal line for Heparin=20000 and the 1000 simulated heparine sensitivity lines.  
+```{r}
+
+plot_hep20000 <- ggarrange(fig_C + geom_vline(xintercept = 20000, col='red')+ labs(title='',subtitle=''),
+
+dat1000 |> mutate(act_20000 = act_0+ slope_hep*20000) |>
+  ggplot(aes(x= act_20000))+
+  geom_histogram(color='white', fill='red', binwidth = 15)+
+  theme_classic()+
+  labs(x= 'ACT (s)')
+)
+
+annotate_figure(plot_hep20000, top= text_grob("Simulated P(ACT|heparin=20000)"))
+```
+
