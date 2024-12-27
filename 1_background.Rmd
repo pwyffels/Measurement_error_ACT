@@ -1,8 +1,6 @@
 ---
 title: "Background"
-output: 
-  html_document:
-    code_folding: hide
+output: html_document
 date: "2024-12-27"
 ---
 
@@ -98,28 +96,27 @@ fig_B <-ggplot(dat1)+
   geom_segment(aes(x= 0, xend=33000,
                    y= act_0, yend=act_33000), linewidth=1.5)+
   
-  geom_segment(#data =dat1, 
-               aes(x= 0, xend = median(hep_act_x),
-                   y= median(act_x), yend= median(act_x)), 
-               col='darkred', linetype=3,linewidth=0.5)+
-  # pijltje in het midden
-  geom_segment(#data =dat1, 
-    aes(x= 0, xend = 0.5*median(hep_act_x),
-        y= median(act_x), yend= median(act_x)), 
-    col='darkred', linewidth=0.5,
-    arrow=arrow(length=unit(2, "mm")))+
-  
+  # bull titration
+  geom_segment(
+    aes(x= 0, xend = median(hep_act_x),
+                   y= median(act_x), yend= median(act_x)),
+    col='darkred', linetype=3,linewidth=0.5)+
   geom_segment(
     aes(x= median(hep_act_x), xend = median(hep_act_x),
         yend= 0, y= median(act_x)), 
     col='darkred', linetype=3,linewidth=0.5)+
-  
-  # pijltje in het midden
+    
+  ## arrows
+  geom_segment( 
+    aes(x= 0, xend = 0.5*median(hep_act_x),
+        y= median(act_x), yend= median(act_x)), 
+    col='darkred', linewidth=0.5,
+    arrow=arrow(length=unit(2, "mm")))+
   geom_segment(
-               aes(x= median(hep_act_x), xend = median(hep_act_x),
-                   yend= 0.25*median(act_x), y= 0.5*median(act_x)), 
-               col='darkred', linewidth=0.5,
-               arrow=arrow(length=unit(2, "mm")))+
+    aes(x= median(hep_act_x), xend = median(hep_act_x),
+                   yend= 0.25*median(act_x), y= 0.5*median(act_x)),
+    col='darkred', linewidth=0.5,
+    arrow=arrow(length=unit(2, "mm")))+
   
   geom_point( aes(x= median(hep_act_x), y= median(act_x)),
               col='darkred', size=2.5)+
@@ -136,7 +133,9 @@ fig_B <-ggplot(dat1)+
        subtitle='P(Heparin|kACT=126)',
     x='Heparin (IU)',
        y='Activated Clotting Time (s)',tag='B')+
+  
   coord_cartesian(ylim=c(0,200), xlim=c(-1000,7000))+
+
   scale_x_continuous(minor_breaks = c(-1250,1250,3750,7250),
                      breaks = c(0,dat1$hep_act_x,2500,5000),
                      labels=c(0,round(dat1$hep_act_x,0),2500,5000))
