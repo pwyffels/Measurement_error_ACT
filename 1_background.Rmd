@@ -1,6 +1,8 @@
 ---
 title: "Background"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
 date: "2024-12-27"
 ---
 
@@ -8,21 +10,15 @@ date: "2024-12-27"
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
-## abbreviations
 
-kACT = the kaolin based Activated Clotting Time (in seconds). This is the measured value of the 'real' (underlying ACT) with a device comparable to the one used in the study of Jain et al.  
-ACT = the 'real' Activated Clotting Time.
+## Abbreviations
+
+-   kACT = the kaolin based Activated Clotting Time (in seconds). This is the measured value of the 'real' (underlying ACT) with a device comparable to the one used in the study of Jain et al.\
+-   ACT = the 'real' Activated Clotting Time.
 
 ## the Average Patient
-We are doing our simulation based on 'the average' patient from the study from Jain et al.
-This means that we assume a patient with a weight of 93 kg with a measure baseline ACT (Activated Clotting Time) of 116 seconds. After receiving 33000 IU heparine the new measured ACT becomes 535 seconds. After Protamine administration the new measured ACT becomes 124.
 
-## Vizualisation
-
-### Figure A: ACT changes after administration of Heparin.
-P(kACT|Heparin), the relation (for the point-estimate) of the expected measured kACT based on the heparin dose, can be vizualized. 
-
-
+We are doing our simulation based on 'the average' patient from the study from Jain et al. This means that we assume a patient with a weight of 93 kg with a measure baseline ACT (Activated Clotting Time) of 116 seconds. After receiving 33000 IU heparine the new measured ACT becomes 535 seconds. After Protamine administration the new measured ACT becomes 124.
 
 ```{r}
 # data set
@@ -35,6 +31,16 @@ dat1 <- tibble(
   act_x = 124,
   hep_act_x = (act_x-act_0)/slope_hep
 )
+```
+
+## Vizualisation
+
+### Figure A: ACT changes after administration of Heparin.
+
+P(kACT\|Heparin), the relation (for the point-estimate) of the expected measured kACT based on the heparin dose, can be vizualized.
+
+```{r}
+
 
 # figA
 
@@ -61,12 +67,15 @@ fig_A <- ggplot(dat1)+
                    y=act_33000/3, yend=act_33000/2),
                arrow=arrow(length=unit(3, "mm")),
                col='steelblue',linewidth=0.5,linetype=1)+
+  
   theme_minimal()+
+  
   labs(
     title='Measured data',
        subtitle='P(kACT|Heparin)',
     x='Heparin (IU)',
        y='Activated Clotting Time (s)',tag='A')+
+  
   coord_cartesian(ylim=c(0,700))
 
 fig_A  
@@ -74,11 +83,9 @@ fig_A
 
 ### Figure B: expected Heparin levels based on ACT measurement.
 
-Following this reasoning (see: [Bull BS, Huse WM, Brauer FS et al. J Thorac Cardiovasc Surg 1975; 69: 685-689](https://pubmed.ncbi.nlm.nih.gov/1127967/) ), the residual heparin (after protamin administration) can be calculated.
-This corresponds to P(Heparin|kACT): the expexted Heparin for a measured (new) ACT value.
-In our case: A new kACT of 126s would imply an expected residual heparin level of 630 IU. (formula: heparin = (126-116)/((555-116)/33000))
-For a vizualisation of this calculation see the dark red arrows in fig B.
-
+Following this reasoning (see: [Bull BS, Huse WM, Brauer FS et al. J Thorac Cardiovasc Surg 1975; 69: 685-689](https://pubmed.ncbi.nlm.nih.gov/1127967/) ), the residual heparin (after protamin administration) can be calculated.\
+This corresponds to P(Heparin\|kACT): the expexted Heparin for a measured (new) ACT value.\
+In our case: A new kACT of 126s would imply an expected residual heparin level of 630 IU. (formula: heparin = (126-116)/((555-116)/33000)) For a vizualisation of this calculation see the dark red arrows in fig B.
 
 ```{r}
 fig_B <-ggplot(dat1)+
@@ -136,4 +143,3 @@ fig_B <-ggplot(dat1)+
 
 fig_B
 ```
-
