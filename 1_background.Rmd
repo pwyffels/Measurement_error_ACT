@@ -74,9 +74,9 @@ fig_A
 
 ### Figure B: expected Heparin levels based on ACT measurement.
 
-Following this reasoning (see Bull-titration.. ref), the residual heparin (after protamin administration) can be calculated.
+Following this reasoning (see: [Bull BS, Huse WM, Brauer FS et al. J Thorac Cardiovasc Surg 1975; 69: 685-689](https://pubmed.ncbi.nlm.nih.gov/1127967/)), the residual heparin (after protamin administration) can be calculated.
 This corresponds to P(Heparin|kACT): the expexted Heparin for a measured (new) ACT value.
-In our case: A new kACT of 126s would imply a residual heparin level of 630 IU. (formula: heparin = (126-116)/((555-116)/33000))
+In our case: A new kACT of 126s would imply an expected residual heparin level of 630 IU. (formula: heparin = (126-116)/((555-116)/33000))
 For a vizualisation of this calculation see the dark red arrows in fig B.
 
 
