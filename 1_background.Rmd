@@ -1,0 +1,135 @@
+---
+title: "Background"
+output: html_document
+date: "2024-12-27"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+## abbreviations
+
+kACT = the kaolin based Activated Clotting Time (in seconds). This is the measured value of the 'real' (underlying ACT) with a device comparable to the one used in the study of Jain et al.  
+ACT = the 'real' Activated Clotting Time.
+
+## the Average Patient
+We are doing our simulation based on 'the average' patient from the study from Jain et al.
+This means that we assume a patient with a weight of 93 kg with a measure baseline ACT (Activated Clotting Time) of 116 seconds. After receiving 33000 IU heparine the new measured ACT becomes 535 seconds. After Protamine administration the new measured ACT becomes 124.
+
+## Vizualisation
+
+### Figure A: ACT changes after administration of Heparin.
+P(kACT|Heparin), the relation (for the point-estimate) of the expected measured kACT based on the heparin dose, can be vizualized. 
+
+```{r}
+# data set
+
+dat1 <- tibble(
+  act_0= 116,
+  hep=33000,
+  act_33000 = 535,
+  slope_hep= (act_33000-act_0)/33000,
+  act_x = 124,
+  hep_act_x = (act_x-act_0)/slope_hep
+)
+
+# figA
+
+ggplot(dat1)+
+  geom_vline(xintercept = 0)+
+  geom_hline(yintercept = 0)+
+  geom_point(aes(x= 0, y= act_0),size=2.5)+
+  geom_point(aes(x= 33000, y= act_33000),size=2.5)+
+  
+  # observed Heparin sensitivity
+  geom_segment(aes(x= 0, xend=33000,
+                   y= act_0, yend=act_33000), linewidth=1.5)+
+  
+  
+  geom_segment(aes(x=0, xend=0, y=0, yend=113-10),
+               col='steelblue',linewidth=0.5, linetype=3)+
+  geom_segment(aes(x=0, xend=0, y=0, yend=(113-10)/2),
+               arrow=arrow(length=unit(3, "mm")),
+               col='steelblue',linewidth=0.5)+
+  geom_segment(aes(x=33000, xend=33000, 
+                   y=0, yend=act_33000-10),
+               col='steelblue',linewidth=0.5,linetype=3)+
+  geom_segment(aes(x=33000, xend=33000, 
+                   y=act_33000/3, yend=act_33000/2),
+               arrow=arrow(length=unit(3, "mm")),
+               col='steelblue',linewidth=0.5,linetype=1)+
+  theme_minimal()+
+  labs(
+    title='Measured data',
+       subtitle='P(kACT|Heparin)',
+    x='Heparin (IU)',
+       y='Activated Clotting Time (s)',tag='A')+
+  coord_cartesian(ylim=c(0,700))
+  
+```
+
+### Figure B: expected Heparin levels based on ACT measurement.
+
+Following this reasoning (see Bull-titration.. ref), the residual heparin (after protamin administration) can be calculated.
+This corresponds to P(Heparin|kACT): the expexted Heparin for a measured (new) ACT value.
+In our case: A new kACT of 126s would imply a residual heparin level of 630 IU. (formula: heparin = (126-116)/((555-116)/33000))
+For a vizualisation of this calculation see the dark red arrows in fig B.
+
+
+```{r}
+ggplot(dat1)+
+  geom_vline(xintercept = 0)+
+  geom_hline(yintercept = 0)+
+  geom_point(aes(x= 0, y= act_0),size=2.5)+
+  geom_point(aes(x= 33000, y= act_33000),size=2.5)+
+  
+  # observed Heparin sensitivity
+  geom_segment(aes(x= 0, xend=33000,
+                   y= act_0, yend=act_33000), linewidth=1.5)+
+  
+  geom_segment(#data =dat1, 
+               aes(x= 0, xend = median(hep_act_x),
+                   y= median(act_x), yend= median(act_x)), 
+               col='darkred', linetype=3,linewidth=0.5)+
+  # pijltje in het midden
+  geom_segment(#data =dat1, 
+    aes(x= 0, xend = 0.5*median(hep_act_x),
+        y= median(act_x), yend= median(act_x)), 
+    col='darkred', linewidth=0.5,
+    arrow=arrow(length=unit(2, "mm")))+
+  
+  geom_segment(
+    aes(x= median(hep_act_x), xend = median(hep_act_x),
+        yend= 0, y= median(act_x)), 
+    col='darkred', linetype=3,linewidth=0.5)+
+  
+  # pijltje in het midden
+  geom_segment(
+               aes(x= median(hep_act_x), xend = median(hep_act_x),
+                   yend= 0.25*median(act_x), y= 0.5*median(act_x)), 
+               col='darkred', linewidth=0.5,
+               arrow=arrow(length=unit(2, "mm")))+
+  
+  geom_point( aes(x= median(hep_act_x), y= median(act_x)),
+              col='darkred', size=2.5)+
+  
+  
+  geom_point(aes(x= median(hep_act_x), y= 0),
+             col='darkred', size=2.5)+
+  geom_point(aes(x= 0, y= median(act_x)),
+             col='darkred', size=2.5)+
+  
+  theme_minimal()+
+  labs(
+    title='Measured data',
+       subtitle='P(Heparin|kACT=126)',
+    x='Heparin (IU)',
+       y='Activated Clotting Time (s)',tag='B')+
+  coord_cartesian(ylim=c(0,200), xlim=c(-1000,7000))+
+  scale_x_continuous(minor_breaks = c(-1250,1250,3750,7250),
+                     breaks = c(0,dat1$hep_act_x,2500,5000),
+                     labels=c(0,round(dat1$hep_act_x,0),2500,5000))
+
+```
+
